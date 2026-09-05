@@ -7,6 +7,9 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./signal.db"
     twelvedata_api_key: str = ""
 
+    # Signs auth tokens. Override in .env for anything but local use.
+    jwt_secret: str = "dev-only-insecure-secret-change-me-in-production"
+
     # Cap the window of changes shown to a returning user, so a long absence
     # doesn't surface months of slow drift as if it were recent.
     lookback_cap_days: int = 30
