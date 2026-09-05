@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Local database (regenerable via create_tables.py)
+*.db
+*.db-wal
+*.db-shm
+
+# Secrets — never commit the API key
+.env
+
+# Node / frontend (added at Step 6)
+node_modules/
+dist/
+
+# OS / editor
+.DS_Store
+.vscode/

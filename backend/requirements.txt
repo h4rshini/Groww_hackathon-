@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+pydantic-settings
+httpx
+apscheduler
+# auth deps (passlib[bcrypt], python-jose) added at Step 5 — not needed yet
