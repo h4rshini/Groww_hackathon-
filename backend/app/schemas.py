@@ -1,3 +1,5 @@
+from datetime import date, datetime
+
 from pydantic import BaseModel, EmailStr
 
 
@@ -14,3 +16,16 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class TickerRequest(BaseModel):
+    symbol: str
+
+
+class WatchlistItemOut(BaseModel):
+    symbol: str
+    name: str | None
+    added_at: datetime
+    # Null right after adding, until the background fetch fills it in.
+    latest_close: float | None
+    latest_date: date | None

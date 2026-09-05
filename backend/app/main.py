@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .auth import router as auth_router
 from .deps import get_current_user
 from .models import User
+from .watchlist import router as watchlist_router
 
 app = FastAPI(title="Signal API")
 
@@ -15,6 +16,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(watchlist_router)
 
 
 @app.get("/me")
