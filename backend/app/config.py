@@ -18,5 +18,11 @@ class Settings(BaseSettings):
     # Minimum prior days needed to define "normal"; below this, no signal fires.
     min_baseline_days: int = 5
 
+    # How many recent bars define a stock's "normal" for the engine.
+    baseline_bars: int = 30
+    # A flag is high-confidence (not just medium) once combined signal strength
+    # reaches this. Minimum possible flagged score is 2.0 (two signals at threshold).
+    high_confidence_score: float = 3.0
+
 
 settings = Settings()

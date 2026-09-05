@@ -1,0 +1,72 @@
+from dataclasses import dataclass
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from .config import settings
+from .models import ChangeEvent, Instrument, Observation
+from .signals import SignalResult, price_move_signal, volume_signal
+
+# A single signal is treated as noise; a flag needs corroboration.
+CO_OCCURRENCE_MIN = 2
+
+
+@dataclass
+class EngineResult:
+    flagged: bool
+    confidence: str | None   # "medium" | "high"
+    score: float
+    reasons: list[str]
+    signals: list[SignalResult]
+
+
+def evaluate(closes: list[float], volumes: list[int]) -> EngineResult:
+    signals = [price_move_signal(closes), volume_signal(volumes)]
+    fired = [s for s in signals if s.fired]
+
+    if len(fired) < CO_OCCURRENCE_MIN:
+        return EngineResult(False, None, 0.0, [], signals)
+
+    score = sum(s.strength for s in fired)
+    confidence = "high" if score >= settings.high_confidence_score else "medium"
+    reasons = [s.reason for s in fired]
+    return EngineResult(True, confidence, score, reasons, signals)
+
+
+def evaluate_instrument(session: Session, instrument: Instrument) -> ChangeEvent | None:
+    """Evaluate an instrument's latest bar and persist a flag if one fires."""
+    bars = session.scalars(
+        select(Observation)
+        .where(Observation.instrument_id == instrument.id)
+        .order_by(Observation.bar_date.desc())
+        .limit(settings.baseline_bars)
+    ).all()
+    bars = list(reversed(bars))  # back to oldest-first for the signals
+    if not bars:
+        return None
+
+    latest_date = bars[-1].bar_date
+    existing = session.scalar(
+        select(ChangeEvent).where(
+            ChangeEvent.instrument_id == instrument.id,
+            ChangeEvent.window_end == latest_date,
+        )
+    )
+    if existing is not None:
+        return existing
+
+    result = evaluate([b.close for b in bars], [b.volume for b in bars])
+    if not result.flagged:
+        return None
+
+    event = ChangeEvent(
+        instrument_id=instrument.id,
+        window_start=bars[0].bar_date,
+        window_end=latest_date,
+        confidence=result.confidence,
+        score=result.score,
+        reasons=result.reasons,
+    )
+    session.add(event)
+    session.commit()
+    return event
