@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -5,9 +7,20 @@ from .auth import router as auth_router
 from .deps import get_current_user
 from .feed import router as feed_router
 from .models import User
+from .scheduler import start_scheduler
 from .watchlist import router as watchlist_router
 
-app = FastAPI(title="Signal API")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler = start_scheduler()
+    try:
+        yield
+    finally:
+        scheduler.shutdown()
+
+
+app = FastAPI(title="Signal API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
