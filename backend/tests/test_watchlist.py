@@ -1,14 +1,3 @@
-import pytest
-
-import app.watchlist as watchlist
-
-
-@pytest.fixture(autouse=True)
-def no_network_backfill(monkeypatch):
-    # Don't hit the vendor in unit tests; the backfill path is covered separately.
-    monkeypatch.setattr(watchlist, "backfill_symbol", lambda symbol: None)
-
-
 def test_watchlist_requires_auth(client):
     assert client.get("/watchlist").status_code == 401
 
