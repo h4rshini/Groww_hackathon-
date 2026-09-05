@@ -576,3 +576,150 @@ input {
   padding: 40px 0;
   text-align: center;
 }
+
+/* ---------- clickable + detail modal ---------- */
+.clickable {
+  cursor: pointer;
+}
+.card.clickable:hover,
+.wl-row.clickable:hover {
+  border-color: var(--muted);
+}
+
+.modal-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 9, 12, 0.72);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  z-index: 100;
+  animation: fade-in 0.2s ease;
+}
+.modal {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 26px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+  animation: modal-in 0.25s ease;
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 24px;
+  line-height: 1;
+}
+.modal-close:hover {
+  color: var(--ink);
+}
+
+.detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.detail-id {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.detail-symbol {
+  font-size: 22px;
+  font-weight: 500;
+}
+.detail-price {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 16px;
+}
+
+.chart {
+  width: 100%;
+  height: 180px;
+  display: block;
+  margin-bottom: 18px;
+}
+.chart-line {
+  fill: none;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.chart-line.up {
+  stroke: var(--up);
+}
+.chart-line.down {
+  stroke: var(--down);
+}
+.chart-area {
+  opacity: 0.1;
+}
+.chart-area.up {
+  fill: var(--up);
+}
+.chart-area.down {
+  fill: var(--down);
+}
+.chart-empty {
+  color: var(--muted);
+  padding: 30px 0;
+  text-align: center;
+}
+
+.detail-signals {
+  border-left: 3px solid var(--border);
+  padding: 4px 0 4px 16px;
+}
+.detail-signals.high {
+  border-color: var(--high);
+}
+.detail-signals.medium {
+  border-color: var(--medium);
+}
+.detail-signals-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.detail-signals.high .reasons {
+  color: #f0e4cf;
+}
+.detail-signals.medium .reasons {
+  color: #d9e6e4;
+}
+.detail-quiet {
+  color: var(--muted);
+}
+.detail-context {
+  margin-top: 16px;
+  color: var(--faint);
+  font-size: 13px;
+}

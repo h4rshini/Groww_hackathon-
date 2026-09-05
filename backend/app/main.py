@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .auth import router as auth_router
 from .deps import get_current_user
+from .detail import router as detail_router
 from .feed import router as feed_router
 from .models import User
 from .scheduler import start_scheduler
@@ -35,6 +36,7 @@ app.include_router(auth_router)
 app.include_router(watchlist_router)
 app.include_router(feed_router)
 app.include_router(search_router)
+app.include_router(detail_router)
 
 
 @app.get("/me")

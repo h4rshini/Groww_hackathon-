@@ -39,4 +39,5 @@ export const api = {
   getFeed: () => request("/feed"),
   markSeen: () => request("/seen", { method: "POST" }),
   search: (q) => request(`/search?q=${encodeURIComponent(q)}`),
+  instrument: (symbol) => request(`/instrument/${encodeURIComponent(symbol)}`),
 };

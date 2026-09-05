@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 
 import { api } from "../api";
+import { useDetail } from "../detail";
 import SearchAdd from "./SearchAdd";
 import Sparkline from "./Sparkline";
 
 export default function Watchlist() {
+  const { open } = useDetail();
   const [items, setItems] = useState(null);
   const [error, setError] = useState(null);
 
@@ -46,7 +48,11 @@ export default function Watchlist() {
       ) : (
         <ul className="wl">
           {items.map((it) => (
-            <li key={it.symbol} className={`wl-row ${it.flagged ? "flagged" : ""}`}>
+            <li
+              key={it.symbol}
+              className={`wl-row clickable ${it.flagged ? "flagged" : ""}`}
+              onClick={() => open(it.symbol)}
+            >
               <div className="wl-id">
                 <span className="wl-symbol mono">{it.symbol}</span>
                 {it.flagged && <span className="wl-badge">signal</span>}
@@ -72,7 +78,10 @@ export default function Watchlist() {
 
               <button
                 className="wl-remove"
-                onClick={() => remove(it.symbol)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  remove(it.symbol);
+                }}
                 aria-label={`Remove ${it.symbol}`}
               >
                 ×

@@ -1,3 +1,4 @@
+import { useDetail } from "../detail";
 import SignalMeter from "./SignalMeter";
 
 function daysAgo(dateStr) {
@@ -8,9 +9,14 @@ function daysAgo(dateStr) {
 }
 
 export default function FeedCard({ item, index = 0 }) {
+  const { open } = useDetail();
   const pct = item.since_last_seen_pct;
   return (
-    <article className={`card ${item.confidence}`} style={{ animationDelay: `${index * 0.08}s` }}>
+    <article
+      className={`card clickable ${item.confidence}`}
+      style={{ animationDelay: `${index * 0.08}s` }}
+      onClick={() => open(item.symbol)}
+    >
       <SignalMeter confidence={item.confidence} />
 
       <div className="card-mid">

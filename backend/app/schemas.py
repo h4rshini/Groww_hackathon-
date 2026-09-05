@@ -50,3 +50,23 @@ class FeedResponse(BaseModel):
     last_seen_at: datetime | None
     window_days: int
     items: list[FeedEntry]
+
+
+class HistoryPoint(BaseModel):
+    date: date
+    close: float
+
+
+class InstrumentDetail(BaseModel):
+    symbol: str
+    name: str | None
+    latest_close: float | None
+    latest_date: date | None
+    change_pct: float | None
+    history: list[HistoryPoint]
+    flagged: bool
+    confidence: str | None
+    score: float | None
+    reasons: list[str]
+    flagged_on: date | None
+    since_last_seen_pct: float | None

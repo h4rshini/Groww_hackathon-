@@ -1,8 +1,10 @@
 import { useState } from "react";
 
 import { AuthProvider, useAuth } from "./auth";
+import { DetailProvider } from "./detail";
 import AuthScreen from "./components/AuthScreen";
 import Feed from "./components/Feed";
+import StockDetail from "./components/StockDetail";
 import Watchlist from "./components/Watchlist";
 
 function Shell() {
@@ -13,31 +15,34 @@ function Shell() {
   if (!user) return <AuthScreen />;
 
   return (
-    <div className="app">
-      <header className="topbar">
-        <span className="brand small">Signal</span>
-        <nav className="nav">
-          <button
-            className={view === "feed" ? "nav-tab active" : "nav-tab"}
-            onClick={() => setView("feed")}
-          >
-            Attention
+    <DetailProvider>
+      <div className="app">
+        <header className="topbar">
+          <span className="brand small">Signal</span>
+          <nav className="nav">
+            <button
+              className={view === "feed" ? "nav-tab active" : "nav-tab"}
+              onClick={() => setView("feed")}
+            >
+              Attention
+            </button>
+            <button
+              className={view === "watchlist" ? "nav-tab active" : "nav-tab"}
+              onClick={() => setView("watchlist")}
+            >
+              Watchlist
+            </button>
+          </nav>
+          <div className="spacer" />
+          <span className="muted">{user.email}</span>
+          <button className="link" onClick={logout}>
+            Log out
           </button>
-          <button
-            className={view === "watchlist" ? "nav-tab active" : "nav-tab"}
-            onClick={() => setView("watchlist")}
-          >
-            Watchlist
-          </button>
-        </nav>
-        <div className="spacer" />
-        <span className="muted">{user.email}</span>
-        <button className="link" onClick={logout}>
-          Log out
-        </button>
-      </header>
-      <main className="content">{view === "feed" ? <Feed /> : <Watchlist />}</main>
-    </div>
+        </header>
+        <main className="content">{view === "feed" ? <Feed /> : <Watchlist />}</main>
+      </div>
+      <StockDetail />
+    </DetailProvider>
   );
 }
 
