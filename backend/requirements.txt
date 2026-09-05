@@ -4,4 +4,5 @@ sqlalchemy
 pydantic-settings
 httpx
 apscheduler
+pytest
 # auth deps (passlib[bcrypt], python-jose) added at Step 5 — not needed yet
