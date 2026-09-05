@@ -1,5 +1,6 @@
 import { AuthProvider, useAuth } from "./auth";
 import AuthScreen from "./components/AuthScreen";
+import Feed from "./components/Feed";
 
 function Shell() {
   const { user, loading, logout } = useAuth();
@@ -18,7 +19,7 @@ function Shell() {
         </button>
       </header>
       <main className="content">
-        <p className="muted">Signed in. Feed and watchlist coming next.</p>
+        <Feed />
       </main>
     </div>
   );
