@@ -8,6 +8,7 @@ makes the demo account presentable. Usage: python seed_demo.py [email]
 import sys
 from datetime import date, datetime, timedelta, timezone
 
+from app.config import settings
 from app.db import SessionLocal
 from app.fetcher import FetchError, get_or_create_instrument, refresh_symbol
 from app.models import ChangeEvent, User, WatchlistItem
@@ -17,9 +18,8 @@ SYMBOLS = ["NVDA", "TSLA", "AAPL", "MSFT", "AMZN"]
 
 
 def flag(session, inst, days_ago, confidence, score, reasons):
+    session.query(ChangeEvent).filter_by(instrument_id=inst.id).delete()
     d = date.today() - timedelta(days=days_ago)
-    if session.query(ChangeEvent).filter_by(instrument_id=inst.id, window_end=d).first():
-        return
     session.add(ChangeEvent(
         instrument_id=inst.id, window_start=d - timedelta(days=20), window_end=d,
         confidence=confidence, score=score, reasons=reasons,
@@ -46,10 +46,16 @@ def main():
             refresh_symbol(s, sym)
         except FetchError as e:
             print(f"  fetch failed for {sym}: {e}")
+    try:
+        refresh_symbol(s, settings.index_symbol)  # market proxy for the index signal
+    except FetchError as e:
+        print(f"  index fetch failed: {e}")
     s.commit()
 
-    flag(s, insts["NVDA"], 1, "high", 9.4,
-         ["Price moved up 3.6x its typical daily range", "Volume was 4.1x its recent average"])
+    flag(s, insts["NVDA"], 1, "high", 12.0,
+         ["Price moved up 3.6x its typical daily range",
+          "Volume was 4.1x its recent average",
+          "Moved 3.1x its typical range independent of the market"])
     flag(s, insts["TSLA"], 3, "medium", 2.6,
          ["Price moved down 2.3x its typical daily range", "Volume was 2.2x its recent average"])
     s.commit()

@@ -64,3 +64,34 @@ def volume_signal(volumes: list[int]) -> SignalResult:
 
     reason = f"Volume was {ratio:.1f}x its recent average"
     return SignalResult(name, True, ratio, strength, reason)
+
+
+def index_relative_signal(closes: list[float], index_return: float | None) -> SignalResult:
+    """Today's move with the market's move removed, in units of the stock's volatility.
+
+    index_return: the market proxy's return for the same day, or None if unavailable
+    (in which case this signal simply doesn't fire).
+    """
+    name = "index_relative"
+    threshold = settings.index_sigma_threshold
+    if index_return is None or len(closes) < settings.min_baseline_days + 2:
+        return SignalResult(name, False, 0.0, 0.0, None)
+
+    returns = [
+        (closes[i] - closes[i - 1]) / closes[i - 1]
+        for i in range(1, len(closes))
+        if closes[i - 1] != 0
+    ]
+    today, baseline = returns[-1], returns[:-1]
+
+    sigma = stdev(baseline)
+    if sigma < 1e-9:
+        return SignalResult(name, False, 0.0, 0.0, None)
+
+    ratio = abs(today - index_return) / sigma
+    strength = ratio / threshold
+    if ratio < threshold:
+        return SignalResult(name, False, ratio, strength, None)
+
+    reason = f"Moved {ratio:.1f}x its typical range independent of the market"
+    return SignalResult(name, True, ratio, strength, reason)

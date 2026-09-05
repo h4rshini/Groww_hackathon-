@@ -23,6 +23,11 @@ class Settings(BaseSettings):
 
     # How many recent bars define a stock's "normal" for the engine.
     baseline_bars: int = 30
+
+    # Market proxy for the index-relative signal, and how far a market-adjusted
+    # move must exceed the stock's own volatility to count.
+    index_symbol: str = "SPY"
+    index_sigma_threshold: float = 1.5
     # A flag is high-confidence (not just medium) once combined signal strength
     # reaches this. Minimum possible flagged score is 2.0 (two signals at threshold).
     high_confidence_score: float = 3.0

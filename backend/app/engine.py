@@ -5,7 +5,12 @@ from sqlalchemy.orm import Session
 
 from .config import settings
 from .models import ChangeEvent, Instrument, Observation
-from .signals import SignalResult, price_move_signal, volume_signal
+from .signals import (
+    SignalResult,
+    index_relative_signal,
+    price_move_signal,
+    volume_signal,
+)
 
 # A single signal is treated as noise; a flag needs corroboration.
 CO_OCCURRENCE_MIN = 2
@@ -20,8 +25,12 @@ class EngineResult:
     signals: list[SignalResult]
 
 
-def evaluate(closes: list[float], volumes: list[int]) -> EngineResult:
-    signals = [price_move_signal(closes), volume_signal(volumes)]
+def evaluate(closes: list[float], volumes: list[int], index_return: float | None = None) -> EngineResult:
+    signals = [
+        price_move_signal(closes),
+        volume_signal(volumes),
+        index_relative_signal(closes, index_return),
+    ]
     fired = [s for s in signals if s.fired]
 
     if len(fired) < CO_OCCURRENCE_MIN:
@@ -31,6 +40,22 @@ def evaluate(closes: list[float], volumes: list[int]) -> EngineResult:
     confidence = "high" if score >= settings.high_confidence_score else "medium"
     reasons = [s.reason for s in fired]
     return EngineResult(True, confidence, score, reasons, signals)
+
+
+def _index_return_for(session: Session, on_date) -> float | None:
+    idx = session.scalar(select(Instrument).where(Instrument.symbol == settings.index_symbol))
+    if idx is None:
+        return None
+    bars = session.scalars(
+        select(Observation)
+        .where(Observation.instrument_id == idx.id, Observation.bar_date <= on_date)
+        .order_by(Observation.bar_date.desc())
+        .limit(2)
+    ).all()
+    # Require the proxy to have the same day, so we compare like-for-like.
+    if len(bars) < 2 or bars[0].bar_date != on_date or bars[1].close == 0:
+        return None
+    return (bars[0].close - bars[1].close) / bars[1].close
 
 
 def evaluate_instrument(session: Session, instrument: Instrument) -> ChangeEvent | None:
@@ -55,7 +80,10 @@ def evaluate_instrument(session: Session, instrument: Instrument) -> ChangeEvent
     if existing is not None:
         return existing
 
-    result = evaluate([b.close for b in bars], [b.volume for b in bars])
+    index_return = None
+    if instrument.symbol != settings.index_symbol:
+        index_return = _index_return_for(session, latest_date)
+    result = evaluate([b.close for b in bars], [b.volume for b in bars], index_return)
     if not result.flagged:
         return None
 

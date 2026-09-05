@@ -1,4 +1,4 @@
-from app.signals import price_move_signal, volume_signal
+from app.signals import index_relative_signal, price_move_signal, volume_signal
 
 # ~1% daily wobble, so a big final move stands out against it.
 QUIET_PRICES = [100, 101, 100, 101, 100, 101, 100]
@@ -52,4 +52,21 @@ def test_volume_needs_enough_history():
 
 def test_volume_zero_average_does_not_divide_by_zero():
     r = volume_signal([0, 0, 0, 0, 0, 300])
+    assert not r.fired
+
+
+def test_index_signal_fires_when_stock_moves_but_market_flat():
+    r = index_relative_signal(QUIET_PRICES + [103], index_return=0.0)
+    assert r.fired
+    assert "market" in r.reason
+
+
+def test_index_signal_suppressed_when_move_matches_market():
+    # ~3% up, but the market was also up ~3% — the move is explained by the market.
+    r = index_relative_signal(QUIET_PRICES + [103], index_return=0.03)
+    assert not r.fired
+
+
+def test_index_signal_needs_market_data():
+    r = index_relative_signal(QUIET_PRICES + [103], index_return=None)
     assert not r.fired
