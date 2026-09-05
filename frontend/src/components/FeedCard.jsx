@@ -7,10 +7,10 @@ function daysAgo(dateStr) {
   return `${days} days ago`;
 }
 
-export default function FeedCard({ item }) {
+export default function FeedCard({ item, index = 0 }) {
   const pct = item.since_last_seen_pct;
   return (
-    <article className={`card ${item.confidence}`}>
+    <article className={`card ${item.confidence}`} style={{ animationDelay: `${index * 0.08}s` }}>
       <SignalMeter confidence={item.confidence} />
 
       <div className="card-mid">

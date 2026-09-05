@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 
 import { api } from "../api";
+import SearchAdd from "./SearchAdd";
+import Sparkline from "./Sparkline";
 
 export default function Watchlist() {
   const [items, setItems] = useState(null);
-  const [symbol, setSymbol] = useState("");
   const [error, setError] = useState(null);
-  const [busy, setBusy] = useState(false);
 
   function load() {
     api.getWatchlist().then(setItems).catch((e) => setError(e.message));
@@ -14,23 +14,10 @@ export default function Watchlist() {
 
   useEffect(load, []);
 
-  async function add(e) {
-    e.preventDefault();
-    const sym = symbol.trim();
-    if (!sym) return;
-    setError(null);
-    setBusy(true);
-    try {
-      await api.addTicker(sym);
-      setSymbol("");
-      load();
-      // Price is fetched in the background, so refetch shortly to pick it up.
-      setTimeout(load, 2500);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
+  function afterAdd() {
+    load();
+    // Price and sparkline fill in from the background fetch; pick them up shortly.
+    setTimeout(load, 2500);
   }
 
   async function remove(sym) {
@@ -52,34 +39,37 @@ export default function Watchlist() {
         </div>
       </div>
 
-      <form className="add-row" onSubmit={add}>
-        <input
-          value={symbol}
-          onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-          placeholder="Add a ticker — e.g. AAPL"
-          maxLength={12}
-        />
-        <button type="submit" disabled={busy}>
-          {busy ? "Adding…" : "Add"}
-        </button>
-      </form>
-      {error && <div className="error add-error">{error}</div>}
+      <SearchAdd onAdd={afterAdd} />
 
       {items.length === 0 ? (
-        <div className="state">No stocks yet. Add a ticker above to start tracking.</div>
+        <div className="state">No stocks yet. Search above to start tracking.</div>
       ) : (
         <ul className="wl">
           {items.map((it) => (
-            <li key={it.symbol} className="wl-row">
-              <span className="wl-symbol mono">{it.symbol}</span>
-              <span className="wl-name">{it.name || ""}</span>
-              <span className="wl-price mono">
-                {it.latest_close != null ? (
-                  `$${it.latest_close.toFixed(2)}`
-                ) : (
-                  <span className="muted">fetching…</span>
+            <li key={it.symbol} className={`wl-row ${it.flagged ? "flagged" : ""}`}>
+              <div className="wl-id">
+                <span className="wl-symbol mono">{it.symbol}</span>
+                {it.flagged && <span className="wl-badge">signal</span>}
+              </div>
+
+              <Sparkline data={it.spark} />
+
+              <div className="wl-nums">
+                <span className="wl-price mono">
+                  {it.latest_close != null ? (
+                    `$${it.latest_close.toFixed(2)}`
+                  ) : (
+                    <span className="muted">fetching…</span>
+                  )}
+                </span>
+                {it.change_pct != null && (
+                  <span className={`wl-change ${it.change_pct >= 0 ? "pct-up" : "pct-down"}`}>
+                    {it.change_pct >= 0 ? "+" : ""}
+                    {it.change_pct}%
+                  </span>
                 )}
-              </span>
+              </div>
+
               <button
                 className="wl-remove"
                 onClick={() => remove(it.symbol)}

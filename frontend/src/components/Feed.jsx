@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 
 import { api } from "../api";
 import FeedCard from "./FeedCard";
+import SignalScope from "./SignalScope";
 
 function subtitle(feed) {
-  if (!feed) return "";
   if (feed.last_seen_at === null) return "Your first look — showing the last 30 days.";
   const d = feed.window_days;
   return `Since you last looked · ${d === 0 ? "today" : d === 1 ? "1 day" : `${d} days`}`;
@@ -28,34 +28,31 @@ export default function Feed() {
   if (error) return <div className="state">Couldn't load your feed: {error}</div>;
   if (!feed) return <div className="state">Loading…</div>;
 
-  const hasItems = feed.items.length > 0;
+  const n = feed.items.length;
+  const headline = n === 0 ? "All quiet." : `${n} signal${n > 1 ? "s" : ""}`;
 
   return (
     <section>
+      <div className="scope-wrap">
+        <SignalScope items={feed.items} />
+      </div>
+
       <div className="feed-head">
         <div>
-          <h1 className="feed-title">Attention</h1>
+          <h1 className="feed-title">{headline}</h1>
           <div className="feed-sub">{subtitle(feed)}</div>
         </div>
-        {hasItems && (
+        {n > 0 && (
           <button className="review-btn" onClick={review}>
             Mark as reviewed
           </button>
         )}
       </div>
 
-      {hasItems ? (
-        feed.items.map((item) => <FeedCard key={item.symbol} item={item} />)
+      {n > 0 ? (
+        feed.items.map((item, i) => <FeedCard key={item.symbol} item={item} index={i} />)
       ) : (
-        <div className="quiet">
-          <div className="quiet-mark">
-            <span />
-            <span />
-            <span />
-          </div>
-          <h2>All quiet.</h2>
-          <p>Nothing in your watchlist needs your attention right now.</p>
-        </div>
+        <p className="quiet-line">Nothing in your watchlist needs your attention right now.</p>
       )}
     </section>
   );
