@@ -38,4 +38,5 @@ export const api = {
   removeTicker: (symbol) => request(`/watchlist/${symbol}`, { method: "DELETE" }),
   getFeed: () => request("/feed"),
   markSeen: () => request("/seen", { method: "POST" }),
+  search: (q) => request(`/search?q=${encodeURIComponent(q)}`),
 };

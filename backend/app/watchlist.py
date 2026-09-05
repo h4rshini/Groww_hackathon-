@@ -1,34 +1,59 @@
+from datetime import date, timedelta
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from .config import settings
 from .db import SessionLocal
 from .deps import get_current_user, get_db
 from .engine import evaluate_instrument
 from .fetcher import FetchError, get_or_create_instrument, refresh_symbol
-from .models import Instrument, Observation, User, WatchlistItem
+from .models import ChangeEvent, Instrument, Observation, User, WatchlistItem
 from .schemas import TickerRequest, WatchlistItemOut
 
 router = APIRouter(prefix="/watchlist", tags=["watchlist"])
 
+SPARK_BARS = 20
 
-def _latest(db: Session, instrument_id: int) -> Observation | None:
-    return db.scalar(
+
+def _recent(db: Session, instrument_id: int, n: int) -> list[Observation]:
+    obs = db.scalars(
         select(Observation)
         .where(Observation.instrument_id == instrument_id)
         .order_by(Observation.bar_date.desc())
+        .limit(n)
+    ).all()
+    return list(reversed(obs))
+
+
+def _is_flagged(db: Session, instrument_id: int) -> bool:
+    cutoff = date.today() - timedelta(days=settings.lookback_cap_days)
+    return db.scalar(
+        select(ChangeEvent.id)
+        .where(ChangeEvent.instrument_id == instrument_id, ChangeEvent.window_end >= cutoff)
         .limit(1)
-    )
+    ) is not None
 
 
 def _to_out(db: Session, inst: Instrument, item: WatchlistItem) -> WatchlistItemOut:
-    latest = _latest(db, inst.id)
+    obs = _recent(db, inst.id, SPARK_BARS + 1)
+    latest = obs[-1] if obs else None
+    prev = obs[-2] if len(obs) >= 2 else None
+
+    change_pct = None
+    if latest and prev and prev.close:
+        change_pct = round((latest.close - prev.close) / prev.close * 100, 2)
+
     return WatchlistItemOut(
         symbol=inst.symbol,
         name=inst.name,
         added_at=item.added_at,
         latest_close=latest.close if latest else None,
         latest_date=latest.bar_date if latest else None,
+        change_pct=change_pct,
+        spark=[o.close for o in obs[-SPARK_BARS:]],
+        flagged=_is_flagged(db, inst.id),
     )
 
 

@@ -29,6 +29,9 @@ class WatchlistItemOut(BaseModel):
     # Null right after adding, until the background fetch fills it in.
     latest_close: float | None
     latest_date: date | None
+    change_pct: float | None       # latest close vs the prior day
+    spark: list[float]             # recent closes, oldest first, for a sparkline
+    flagged: bool                  # has a recent change event
 
 
 class FeedEntry(BaseModel):
