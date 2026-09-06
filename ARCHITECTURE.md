@@ -1,27 +1,7 @@
 # Architecture
 
-This is the longer version of "how it works and why." The README covers setup and the short reasoning; this file is the part I'd want to be able to talk through in detail.
 
 ## The shape of it
-
-```mermaid
-graph TD
-    UI[React app] -->|REST| API[FastAPI]
-    API --> DB[(SQLite)]
-
-    subgraph Ingestion
-      FET[Fetcher] -->|daily bars| DB
-      FET -->|polls| TD[Twelve Data]
-    end
-
-    subgraph Meaningfulness
-      ENG[Engine] -->|reads bars| DB
-      ENG -->|writes flags + reasons| DB
-    end
-
-    JOB[Daily job] --> FET
-    JOB --> ENG
-```
 
 Three responsibilities are kept apart on purpose:
 
@@ -46,7 +26,7 @@ A few other choices baked into the schema:
 
 ## The engine
 
-This is the core, so here's the actual math.
+This is the core,
 
 Everything is measured against the stock's own recent behavior over a baseline of its last 30 daily bars. Three signals:
 
@@ -109,7 +89,7 @@ Email and password, hashed with bcrypt, with a signed token (HS256, seven-day ex
 
 ## Where it would break, and what I'd change
 
-SQLite in WAL mode handles the current pattern — many reads, one writer (the daily job). The seam is concurrent writers: once the job is fanning out writes across a lot of users at once, that single-writer model is the bottleneck. The fix is Postgres, which is a connection-string change plus a connection pool since it's all through an ORM, and pulling the scheduler out of the app process. None of that is worth doing now, but it's a clean path and I know exactly where the line is.
+SQLite in WAL mode handles the current pattern — many reads, one writer (the daily job). The seam is concurrent writers: once the job is fanning out writes across a lot of users at once, that single-writer model is the bottleneck. The fix is Postgres, which is a connection-string change plus a connection pool since it's all through an ORM, and pulling the scheduler out of the app process. 
 
 Because data and computation are per-instrument, adding users doesn't multiply either — that part already scales further than the database does.
 

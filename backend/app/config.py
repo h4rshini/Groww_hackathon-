@@ -10,6 +10,12 @@ class Settings(BaseSettings):
     # Signs auth tokens. Override in .env for anything but local use.
     jwt_secret: str = "dev-only-insecure-secret-change-me-in-production"
 
+    # Deployed frontend origin to allow through CORS (localhost is always allowed).
+    frontend_origin: str = ""
+    # On hosted deploys the DB starts empty; seed a demo account on startup so
+    # the flagged feed is there for a first-time visitor.
+    seed_demo_on_start: bool = False
+
     # Cap the window of changes shown to a returning user, so a long absence
     # doesn't surface months of slow drift as if it were recent.
     lookback_cap_days: int = 30
